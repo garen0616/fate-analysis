@@ -1,4 +1,4 @@
-import type { ZiweiInput, ZiweiTopicResult } from './ziweiMock'
+import type { FiveElementState, ZiweiInput, ZiweiTopicResult } from './ziweiMock'
 import type { TarotCardResult } from './tarotMock'
 
 const ZIWEI_KEY = 'ziweiProfiles'
@@ -21,6 +21,8 @@ export type ZiweiProfile = {
   input: ZiweiInput
   results: ZiweiTopicResult[]
   summary: string
+  fiveElements: FiveElementState[]
+  notes?: Record<string, string>
   updatedAt: number
 }
 

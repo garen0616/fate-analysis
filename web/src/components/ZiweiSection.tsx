@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ZiweiInput, ZiweiTopicResult } from '../lib/ziweiMock'
+import clsx from 'clsx'
+import type { FiveElementState, ZiweiInput, ZiweiTopicResult } from '../lib/ziweiMock'
 import { mockZiweiReport } from '../lib/ziweiMock'
 import {
   createId,
@@ -33,13 +34,38 @@ const defaultResults: ZiweiTopicResult[] = [
     score: 75,
     insight: '範例資料：官祿宮得祿馬，適合推進合作並設定收益節點。',
     action: '在下個月初前完成決策會議，並備妥兩種資源配置方案。',
+    timeline: [
+      { label: '下個月', tip: '適合推進新合作' },
+      { label: '三個月內', tip: '維持節奏並定期檢視 KPI' },
+      { label: '半年後', tip: '可評估轉職或合作擴張' },
+    ],
+    palace: {
+      name: '官祿宮',
+      mainStar: '武曲',
+      element: '金',
+      comment: '官祿宮受武曲影響，金氣偏旺，重視效率與行動。',
+    },
+    stars: [
+      { type: '吉', name: '武曲', tip: '武曲帶來執行力，利於爭取資源。' },
+      { type: '凶', name: '地劫', tip: '地劫提醒留意決策過快的風險。' },
+    ],
   },
+]
+
+const defaultFiveElements: FiveElementState[] = [
+  { element: '木', value: 70, advice: '多親近自然或補綠色蔬菜。', color: '#3b873e' },
+  { element: '火', value: 68, advice: '安排運動或陽光浴補足火氣。', color: '#d25b4d' },
+  { element: '土', value: 65, advice: '保持規律作息與伸展，帶來穩定。', color: '#c28f52' },
+  { element: '金', value: 60, advice: '練習呼吸冥想、整理環境補金氣。', color: '#c4b19b' },
+  { element: '水', value: 72, advice: '多補水並透過音樂寫作讓情緒流動。', color: '#4a6fb3' },
 ]
 
 export function ZiweiSection() {
   const [formState, setFormState] = useState<ZiweiInput>(defaultInput)
   const [results, setResults] = useState<ZiweiTopicResult[]>(defaultResults)
   const [summary, setSummary] = useState('尚未排盤，請輸入資料。')
+  const [fiveElements, setFiveElements] = useState<FiveElementState[]>(defaultFiveElements)
+  const [notes, setNotes] = useState<Record<string, string>>({})
   const [profiles, setProfiles] = useState<ZiweiProfile[]>([])
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -53,6 +79,8 @@ export function ZiweiSection() {
       setFormState(stored[0].input)
       setResults(stored[0].results)
       setSummary(stored[0].summary)
+      setFiveElements(stored[0].fiveElements ?? defaultFiveElements)
+      setNotes(stored[0].notes ?? {})
     }
 
     if (typeof window !== 'undefined') {
@@ -63,17 +91,22 @@ export function ZiweiSection() {
           input: ZiweiInput
           summary: string
           results: ZiweiTopicResult[]
+          fiveElements?: FiveElementState[]
         }>(token)
         if (payload) {
           setFormState(payload.input)
           setResults(payload.results)
           setSummary(payload.summary)
+          setFiveElements(payload.fiveElements ?? defaultFiveElements)
+          setNotes({})
           const profile: ZiweiProfile = {
             id: createId(),
             name: payload.input.name || '朋友分享',
             input: payload.input,
             results: payload.results,
             summary: payload.summary,
+            fiveElements: payload.fiveElements ?? defaultFiveElements,
+            notes: {},
             updatedAt: Date.now(),
           }
           setSelectedProfileId(profile.id)
@@ -107,12 +140,15 @@ export function ZiweiSection() {
       const report = await mockZiweiReport(formState)
       setResults(report.results)
       setSummary(report.summary)
+      setFiveElements(report.fiveElements)
       const profile: ZiweiProfile = {
         id: selectedProfileId ?? createId(),
         name: formState.name || '未命名',
         input: formState,
         results: report.results,
         summary: report.summary,
+        fiveElements: report.fiveElements,
+        notes,
         updatedAt: Date.now(),
       }
       setSelectedProfileId(profile.id)
@@ -124,7 +160,7 @@ export function ZiweiSection() {
 
   const handleShare = async () => {
     if (typeof window === 'undefined') return
-    const token = encodeSharePayload({ input: formState, summary, results })
+    const token = encodeSharePayload({ input: formState, summary, results, fiveElements })
     const url = new URL(window.location.href)
     url.searchParams.set('ziwei', token)
     const shareText = url.toString()
@@ -154,6 +190,8 @@ export function ZiweiSection() {
     setFormState(profile.input)
     setResults(profile.results)
     setSummary(profile.summary)
+    setFiveElements(profile.fiveElements ?? defaultFiveElements)
+    setNotes(profile.notes ?? {})
   }
 
   const handleNewProfile = () => {
@@ -161,6 +199,8 @@ export function ZiweiSection() {
     setFormState(defaultInput)
     setResults(defaultResults)
     setSummary('尚未排盤，請輸入資料。')
+    setFiveElements(defaultFiveElements)
+    setNotes({})
   }
 
   const handleDeleteProfile = (profileId: string) => {
@@ -183,6 +223,19 @@ export function ZiweiSection() {
       setFormState(updatedProfile.input)
       setResults(updatedProfile.results)
       setSummary(updatedProfile.summary)
+    }
+  }
+
+  const handleNoteChange = (topic: string, value: string) => {
+    setNotes((prev) => ({ ...prev, [topic]: value }))
+    if (selectedProfileId) {
+      const updatedProfiles = profiles.map((profile) =>
+        profile.id === selectedProfileId
+          ? { ...profile, notes: { ...(profile.notes ?? {}), [topic]: value } }
+          : profile,
+      )
+      setProfiles(updatedProfiles)
+      saveZiweiProfiles(updatedProfiles)
     }
   }
 
@@ -364,6 +417,23 @@ export function ZiweiSection() {
               </RadarChart>
             </ResponsiveContainer>
           </div>
+          <div>
+            <p className="text-sm font-semibold text-ziwei">五行平衡</p>
+            <div className="mt-3 space-y-3 text-sm">
+              {fiveElements.map((item) => (
+                <div key={item.element} className="rounded-2xl border border-white/70 bg-white/90 p-3">
+                  <div className="flex items-center justify-between text-xs font-semibold text-neutral-600">
+                    <span>{item.element}</span>
+                    <span>{item.value}</span>
+                  </div>
+                  <div className="mt-2">
+                    <ScoreBar value={item.value} color={item.color} />
+                  </div>
+                  <p className="mt-2 text-xs text-neutral-500">{item.advice}</p>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="space-y-4">
             {results.map((item) => (
               <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
@@ -374,8 +444,47 @@ export function ZiweiSection() {
                 <div className="my-2">
                   <ScoreBar value={item.score} color="#cc6b5a" />
                 </div>
+                <div className="rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
+                  <p>
+                    <strong>{item.palace.name}</strong> · 主星 {item.palace.mainStar} · {item.palace.comment}
+                  </p>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  {item.stars.map((star) => (
+                    <span
+                      key={star.name}
+                      className={clsx('rounded-full px-3 py-1 font-semibold', {
+                        'bg-emerald-100 text-emerald-600': star.type === '吉',
+                        'bg-rose-100 text-rose-600': star.type === '凶',
+                      })}
+                    >
+                      {star.name}
+                      <span className="ml-1 text-[10px] font-normal">{star.tip}</span>
+                    </span>
+                  ))}
+                </div>
                 <p className="mt-2 text-sm text-neutral-700">{item.insight}</p>
                 <p className="mt-1 text-xs text-neutral-500">建議：{item.action}</p>
+                <div className="mt-3 border-t border-neutral-100 pt-3">
+                  <p className="text-xs font-semibold text-neutral-500">時間軸</p>
+                  <div className="mt-2 space-y-2 text-xs text-neutral-600">
+                    {item.timeline.map((node) => (
+                      <div key={`${item.topic}-${node.label}`} className="rounded-xl bg-neutral-50 px-3 py-2">
+                        <strong className="text-neutral-700">{node.label}</strong>
+                        <p>{node.tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <label className="mt-3 block text-xs font-semibold text-neutral-500">
+                  備忘 / 提醒
+                  <textarea
+                    className="mt-1 w-full rounded-2xl border border-neutral-200 px-3 py-2 text-sm"
+                    placeholder="寫下想提醒自己的行動..."
+                    value={notes[item.topic] ?? ''}
+                    onChange={(event) => handleNoteChange(item.topic, event.target.value)}
+                  />
+                </label>
               </article>
             ))}
           </div>
