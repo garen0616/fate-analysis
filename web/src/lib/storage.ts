@@ -24,6 +24,7 @@ export type ZiweiProfile = {
   fiveElements: FiveElementState[]
   notes?: Record<string, string>
   updatedAt: number
+  source?: 'api' | 'mock'
 }
 
 export type TarotRecord = {

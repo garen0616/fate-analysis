@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import type { FiveElementState, ZiweiInput, ZiweiTopicResult } from '../lib/ziweiMock'
-import { mockZiweiReport } from '../lib/ziweiMock'
 import {
   createId,
   loadZiweiProfiles,
@@ -10,6 +9,7 @@ import {
 } from '../lib/storage'
 import { ScoreBar } from './ScoreBar'
 import { decodeSharePayload, encodeSharePayload } from '../lib/share'
+import { fetchZiweiReport } from '../lib/ziweiService'
 import {
   ResponsiveContainer,
   RadarChart,
@@ -78,6 +78,8 @@ export function ZiweiSection() {
   const [selectedYearIndex, setSelectedYearIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [reportSource, setReportSource] = useState<'api' | 'mock'>('mock')
+  const [apiError, setApiError] = useState<string | null>(null)
   const yearOptions = results[0]?.annualTrends ?? defaultResults[0].annualTrends
 
   useEffect(() => {
@@ -116,6 +118,8 @@ export function ZiweiSection() {
       setFiveElements(stored[0].fiveElements ?? defaultFiveElements)
       setNotes(stored[0].notes ?? {})
       setSelectedYearIndex(0)
+      setReportSource(stored[0].source ?? 'mock')
+      setApiError(null)
     }
 
     if (typeof window !== 'undefined') {
@@ -135,6 +139,8 @@ export function ZiweiSection() {
           setFiveElements(payload.fiveElements ?? defaultFiveElements)
           setNotes({})
           setSelectedYearIndex(0)
+          setReportSource('mock')
+          setApiError(null)
           const profile: ZiweiProfile = {
             id: createId(),
             name: payload.input.name || '朋友分享',
@@ -144,6 +150,7 @@ export function ZiweiSection() {
             fiveElements: payload.fiveElements ?? defaultFiveElements,
             notes: {},
             updatedAt: Date.now(),
+            source: 'mock',
           }
           setSelectedProfileId(profile.id)
           persistProfile(profile)
@@ -173,10 +180,12 @@ export function ZiweiSection() {
     event.preventDefault()
     setLoading(true)
     try {
-      const report = await mockZiweiReport(formState)
+      const { report, source, error } = await fetchZiweiReport(formState)
       setResults(report.results)
       setSummary(report.summary)
       setFiveElements(report.fiveElements)
+      setReportSource(source)
+      setApiError(error ?? null)
       const profile: ZiweiProfile = {
         id: selectedProfileId ?? createId(),
         name: formState.name || '未命名',
@@ -186,6 +195,7 @@ export function ZiweiSection() {
         fiveElements: report.fiveElements,
         notes,
         updatedAt: Date.now(),
+        source,
       }
       setSelectedProfileId(profile.id)
       persistProfile(profile)
@@ -228,6 +238,8 @@ export function ZiweiSection() {
     setSummary(profile.summary)
     setFiveElements(profile.fiveElements ?? defaultFiveElements)
     setNotes(profile.notes ?? {})
+    setReportSource(profile.source ?? 'mock')
+    setApiError(null)
   }
 
   const handleNewProfile = () => {
@@ -239,6 +251,8 @@ export function ZiweiSection() {
     setNotes({})
     setCompareProfileId(null)
     setSelectedYearIndex(0)
+    setReportSource('mock')
+    setApiError(null)
   }
 
   const handleDeleteProfile = (profileId: string) => {
@@ -450,6 +464,10 @@ export function ZiweiSection() {
           <div>
             <p className="text-sm font-semibold text-ziwei">主題摘要</p>
             <p className="text-sm text-neutral-600">{summary}</p>
+            <div className="mt-2 text-xs text-neutral-500">
+              資料來源：{reportSource === 'api' ? 'Ziwei API（iztro）' : '本機示範數據'}
+              {apiError && <span className="ml-2 text-rose-500">API 提示：{apiError}</span>}
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
               <button
                 onClick={handleShare}

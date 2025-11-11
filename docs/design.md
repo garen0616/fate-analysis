@@ -118,4 +118,12 @@
 5. **驗證**
    - 朋友試用收集回饋，優化文案語氣與色彩對比
 
+---
+
+## 7. Ziwei API 與部署
+
+- `services/ziwei-api/`：封裝 iztro-based Flask API，可本地啟動或以 Dockerfile 佈署到 Zeabur／Railway。
+- `VITE_ZIWEI_API_BASE_URL`：讓前端決定是否呼叫遠端 API；未設定時自動使用 mock 範例確保體驗不中斷。
+- `scripts/deploy-zeabur.sh`：一次完成 Vite build、打包 dist.zip、建置 API 映像並（可選）推送到 Zeabur Registry，方便在 Zeabur 建立「前端 Static + 後端 Docker」雙服務架構。
+
 此設計可直接在 VS Code + Codex 中逐步開發，先用靜態 JSON 驗證流程，再迭代演算法與 UI 細節。
