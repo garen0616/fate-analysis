@@ -155,7 +155,6 @@ function App() {
 
           <section id="topics" className="space-y-6">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-ziwei">TOPIC HUB</p>
               <h2 className="text-3xl font-semibold">五大主題卡 · 生活語境優先</h2>
               <p className="text-base text-neutral-600">
                 每張卡片固定包含指數條、核心觀察、時間節點與行動建議，也能延伸到紫微流年或塔羅再抽。
