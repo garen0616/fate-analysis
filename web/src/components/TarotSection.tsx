@@ -11,9 +11,11 @@ import clsx from 'clsx'
 
 const topics = ['事業 / 財運', '婚姻 / 伴侶', '愛情 / 新關係', '家庭 / 孩子', '健康 / 身心']
 const spreads = [
-  { label: '三張 日常卡', value: '3' as const },
+  { label: '三張日常卡', value: '3' as const },
   { label: '六芒星', value: '6' as const },
-  { label: '十字占卜', value: 'cross' as const },
+  { label: '凱爾特十字（簡化）', value: 'cross' as const },
+  { label: '關係牌陣', value: 'relation' as const },
+  { label: '決策牌陣', value: 'decision' as const },
 ]
 
 export function TarotSection() {
@@ -291,7 +293,7 @@ export function TarotSection() {
               )}
             >
               <p className="text-xs font-semibold text-neutral-400">
-                第 {index + 1} 張 · {summary}
+                第 {index + 1} 張 · {summary} · {card.slotMeaning}
               </p>
               <div className="mt-1 flex items-center justify-between">
                 <h4 className="text-lg font-semibold text-tarot">{card.name}</h4>
@@ -305,7 +307,8 @@ export function TarotSection() {
                 </span>
               </div>
               <p className="mt-2 text-sm text-neutral-700">{card.focus}</p>
-              <p className="mt-2 text-xs text-neutral-500">行動建議：{card.advice}</p>
+              <p className="mt-2 text-xs text-neutral-500">行動建議：{card.action}</p>
+              <p className="mt-1 text-xs text-neutral-500">反思問題：{card.reflection}</p>
             </article>
           ))
         )}
