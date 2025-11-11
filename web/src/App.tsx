@@ -1,81 +1,10 @@
 import { HeroSection } from './components/HeroSection'
 import { ResultPreview } from './components/ResultPreview'
-import { TopicCard, type Topic } from './components/TopicCard'
-import { ToolFlowCard, type ToolCard } from './components/ToolFlowCard'
 import { ZiweiSection } from './components/ZiweiSection'
 import { TarotSection } from './components/TarotSection'
 import { FaqSection } from './components/FaqSection'
 
-const topics: Topic[] = [
-  {
-    id: 'career',
-    title: '事業 / 財運',
-    description: '規劃職涯節奏與財務節點，先給出命宮 × 官祿宮的整體指數，再拆大運提醒。',
-    icon: '💼',
-    accent: 'from-amber-100 to-amber-200',
-    focus: ['命宮', '官祿宮', '財帛宮'],
-  },
-  {
-    id: 'marriage',
-    title: '婚姻 / 伴侶',
-    description: '以夫妻宮與對宮互動檢視關係狀態，附上溝通話題與緩衝時間建議。',
-    icon: '💍',
-    accent: 'from-rose-100 to-rose-200',
-    focus: ['夫妻宮', '命宮', '流年化科'],
-  },
-  {
-    id: 'love',
-    title: '愛情 / 新關係',
-    description: '桃花星、情感宮位與塔羅牌義雙軌呈現，適合與朋友分享的新對象觀察表。',
-    icon: '✨',
-    accent: 'from-pink-100 to-fuchsia-200',
-    focus: ['桃花星', '遷移宮', '情緒指數'],
-  },
-  {
-    id: 'family',
-    title: '家庭（父母＋子女）',
-    description: '父母宮關心長輩健康，子女宮關心陪伴節奏；一頁同步掌握上下兩代需要。',
-    icon: '👨‍👩‍👧',
-    accent: 'from-emerald-100 to-emerald-200',
-    focus: ['父母宮', '子女宮', '疾厄宮'],
-  },
-  {
-    id: 'health',
-    title: '健康 / 身心',
-    description: '疾厄宮與五行失衡顯示身體警示燈，搭配塔羅建議動靜與檢查時程。',
-    icon: '🌱',
-    accent: 'from-cyan-100 to-sky-200',
-    focus: ['疾厄宮', '五行比例', '流年化忌'],
-  },
-]
-
-const toolCards: ToolCard[] = [
-  {
-    title: '紫微排盤流程',
-    subtitle: '輸入 → 即時雷達圖 → 主題卡片',
-    tone: 'bg-white/70',
-    steps: [
-      '輸入姓名（可匿名）、出生年月日時、地點、曆法與真太陽時開關',
-      '演算法即時輸出五大主題指數與十二宮摘要',
-      '展開各主題卡查看流年按鈕、行動建議與分享工具',
-    ],
-    actions: ['快速排盤', '高級設定'],
-  },
-  {
-    title: '塔羅抽牌流程',
-    subtitle: '選主題 → 選牌陣 → 抽牌動畫',
-    tone: 'bg-white/60',
-    steps: [
-      '先挑選關注主題與牌陣（3 卡、六芒星或十字），可設定是否允許逆位',
-      '抽牌畫面顯示剩餘牌堆與動畫，完成後自動翻牌',
-      '每張牌附關鍵詞、情境解讀、行動建議與分享/重抽按鈕',
-    ],
-    actions: ['塔羅抽牌', '查看牌意庫'],
-  },
-]
-
 const navLinks = [
-  { label: '主題介紹', target: 'topics' },
   { label: '紫微排盤', target: 'ziwei' },
   { label: '塔羅抽牌', target: 'tarot' },
   { label: '常見問題', target: 'faq' },
@@ -152,26 +81,6 @@ function App() {
             onPrimaryAction={() => scrollToSection('ziwei')}
             onSecondaryAction={() => scrollToSection('tarot')}
           />
-
-          <section id="topics" className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-3xl font-semibold">五大主題卡 · 生活語境優先</h2>
-              <p className="text-base text-neutral-600">
-                每張卡片固定包含指數條、核心觀察、時間節點與行動建議，也能延伸到紫微流年或塔羅再抽。
-              </p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {topics.map((topic) => (
-                <TopicCard key={topic.id} topic={topic} />
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-2">
-            {toolCards.map((card) => (
-              <ToolFlowCard key={card.title} card={card} />
-            ))}
-          </section>
 
           <ZiweiSection />
 
