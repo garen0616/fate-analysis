@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import type { FiveElementState, ZiweiInput, ZiweiTopicResult } from '../lib/ziweiMock'
 import { mockZiweiReport } from '../lib/ziweiMock'
@@ -49,6 +49,12 @@ const defaultResults: ZiweiTopicResult[] = [
       { type: '吉', name: '武曲', tip: '武曲帶來執行力，利於爭取資源。' },
       { type: '凶', name: '地劫', tip: '地劫提醒留意決策過快的風險。' },
     ],
+    annualTrends: [
+      { yearLabel: '今年', highlight: '能見度增加、適合把握主動。', focus: '設定 KPI 與公關節奏。' },
+      { yearLabel: '明年', highlight: '收割成果並回顧流程。', focus: '調整人力配置與現金流。' },
+    ],
+    useGod: '木',
+    avoidGod: '土',
   },
 ]
 
@@ -68,8 +74,36 @@ export function ZiweiSection() {
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [profiles, setProfiles] = useState<ZiweiProfile[]>([])
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
+  const [compareProfileId, setCompareProfileId] = useState<string | null>(null)
+  const [selectedYearIndex, setSelectedYearIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const yearOptions = results[0]?.annualTrends ?? defaultResults[0].annualTrends
+
+  useEffect(() => {
+    if (!yearOptions || yearOptions.length === 0) return
+    if (selectedYearIndex >= yearOptions.length) {
+      setSelectedYearIndex(0)
+    }
+  }, [yearOptions, selectedYearIndex])
+
+  const comparisonRows = useMemo(() => {
+    if (!compareProfileId) return []
+    const profile = profiles.find((item) => item.id === compareProfileId)
+    if (!profile) return []
+    return results
+      .map((item) => {
+        const target = profile.results.find((r) => r.topic === item.topic)
+        if (!target) return null
+        return {
+          topic: item.topic,
+          mine: item.score,
+          friend: target.score,
+          diff: item.score - target.score,
+        }
+      })
+      .filter(Boolean) as Array<{ topic: string; mine: number; friend: number; diff: number }>
+  }, [compareProfileId, profiles, results])
 
   useEffect(() => {
     const stored = loadZiweiProfiles()
@@ -81,6 +115,7 @@ export function ZiweiSection() {
       setSummary(stored[0].summary)
       setFiveElements(stored[0].fiveElements ?? defaultFiveElements)
       setNotes(stored[0].notes ?? {})
+      setSelectedYearIndex(0)
     }
 
     if (typeof window !== 'undefined') {
@@ -99,6 +134,7 @@ export function ZiweiSection() {
           setSummary(payload.summary)
           setFiveElements(payload.fiveElements ?? defaultFiveElements)
           setNotes({})
+          setSelectedYearIndex(0)
           const profile: ZiweiProfile = {
             id: createId(),
             name: payload.input.name || '朋友分享',
@@ -201,6 +237,8 @@ export function ZiweiSection() {
     setSummary('尚未排盤，請輸入資料。')
     setFiveElements(defaultFiveElements)
     setNotes({})
+    setCompareProfileId(null)
+    setSelectedYearIndex(0)
   }
 
   const handleDeleteProfile = (profileId: string) => {
@@ -290,6 +328,26 @@ export function ZiweiSection() {
           新增/重設
         </button>
       </div>
+
+      {profiles.length > 1 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-white/70 bg-white/70 px-4 py-3 text-sm text-neutral-700">
+          <span className="font-semibold text-ziwei">對照朋友</span>
+          <select
+            value={compareProfileId ?? ''}
+            onChange={(event) => setCompareProfileId(event.target.value || null)}
+            className="rounded-2xl border border-neutral-200 px-3 py-2 text-sm"
+          >
+            <option value="">不對照</option>
+            {profiles
+              .filter((profile) => profile.id !== selectedProfileId)
+              .map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name} · {new Date(profile.updatedAt).toLocaleDateString()}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -401,6 +459,46 @@ export function ZiweiSection() {
               </button>
               {shareStatus && <span>{shareStatus}</span>}
             </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {yearOptions.map((trend, index) => (
+                <button
+                  key={trend.yearLabel}
+                  onClick={() => setSelectedYearIndex(index)}
+                  className={clsx(
+                    'rounded-2xl px-4 py-1 text-xs font-semibold',
+                    index === selectedYearIndex
+                      ? 'bg-ziwei text-white'
+                      : 'bg-white/70 text-ziwei border border-ziwei/20',
+                  )}
+                >
+                  {trend.yearLabel}
+                </button>
+              ))}
+            </div>
+            {comparisonRows.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-white/70 bg-white/90 p-3 text-xs text-neutral-600">
+                <p className="mb-2 font-semibold text-ziwei">與朋友指數比較</p>
+                <div className="space-y-1">
+                  {comparisonRows.map((row) => (
+                    <div key={row.topic} className="flex items-center justify-between">
+                      <span>{row.topic}</span>
+                      <span>
+                        我 {row.mine} / 朋友 {row.friend}
+                        <span
+                          className={clsx('ml-2 font-semibold', {
+                            'text-emerald-600': row.diff >= 0,
+                            'text-rose-600': row.diff < 0,
+                          })}
+                        >
+                          {row.diff >= 0 ? '+' : ''}
+                          {row.diff}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="h-64 rounded-2xl border border-white/70 bg-white/80 p-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -435,8 +533,15 @@ export function ZiweiSection() {
             </div>
           </div>
           <div className="space-y-4">
-            {results.map((item) => (
-              <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
+            {results.map((item) => {
+              const trend = item.annualTrends[selectedYearIndex] ?? item.annualTrends[0]
+              return (
+                <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
+                  <div className="mb-2 rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
+                    <p className="font-semibold text-ziwei">{trend.yearLabel}</p>
+                    <p>{trend.highlight}</p>
+                    <p className="text-[11px] text-neutral-500">重點：{trend.focus}</p>
+                  </div>
                 <div className="flex items-center justify-between">
                   <h4 className="text-base font-semibold text-ziwei">{item.topic}</h4>
                   <span className="text-sm font-semibold text-ziwei">{item.score} / 100</span>
@@ -447,6 +552,9 @@ export function ZiweiSection() {
                 <div className="rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
                   <p>
                     <strong>{item.palace.name}</strong> · 主星 {item.palace.mainStar} · {item.palace.comment}
+                  </p>
+                  <p className="mt-1 text-[11px] text-neutral-500">
+                    用神 {item.useGod} ｜ 忌神 {item.avoidGod}
                   </p>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -485,8 +593,9 @@ export function ZiweiSection() {
                     onChange={(event) => handleNoteChange(item.topic, event.target.value)}
                   />
                 </label>
-              </article>
-            ))}
+                </article>
+              )
+            })}
           </div>
         </div>
       </div>

@@ -34,6 +34,13 @@ export type ZiweiTopicResult = {
   timeline: ZiweiTimelineEntry[]
   palace: ZiweiPalaceDetail
   stars: ZiweiStarInfluence[]
+  annualTrends: Array<{
+    yearLabel: string
+    highlight: string
+    focus: string
+  }>
+  useGod: string
+  avoidGod: string
 }
 
 export type FiveElementState = {
@@ -147,6 +154,20 @@ export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> =
         comment: `${tpl.palace} 受 ${tpl.stars[0]} 影響，${tpl.element} 氣較為明顯。`,
       },
       stars: starList,
+      annualTrends: [
+        {
+          yearLabel: `${new Date(input.date).getFullYear()} 年`,
+          highlight: polarity > 0 ? '能見度提升，適合把握主動' : '需要整理內部，避免倉促',
+          focus: score > 75 ? '向外拓展、建立新合作' : '培養基本功、留意資源配置',
+        },
+        {
+          yearLabel: `${new Date(input.date).getFullYear() + 1} 年`,
+          highlight: polarity > 0 ? '進入收割期，做好指標管理' : '穩住根基，避免分心',
+          focus: polarity > 0 ? '設定具體 KPI 與回顧節奏' : '專注重要關係與身心健康',
+        },
+      ],
+      useGod: tpl.element === '木' || tpl.element === '水' ? '木' : '火',
+      avoidGod: tpl.element === '土' ? '金' : '土',
     }
   })
 
