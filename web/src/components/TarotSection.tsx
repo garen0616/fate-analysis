@@ -56,14 +56,17 @@ export function TarotSection() {
           setSelectedTopic(payload.topic)
           setSelectedSpread(payload.spread)
           setAllowReverse(payload.allowReverse)
-          setCards(payload.cards)
+          const normalizedCards = (payload.cards ?? []).filter(
+            (card): card is TarotCardResult => Boolean(card && card.name && card.focus),
+          )
+          setCards(normalizedCards)
           setSummary(payload.summary)
           const record: TarotRecord = {
             id: createId(),
             topic: payload.topic,
             spread: payload.spread,
             allowReverse: payload.allowReverse,
-            cards: payload.cards,
+            cards: normalizedCards,
             summary: payload.summary,
             createdAt: Date.now(),
           }
@@ -76,7 +79,14 @@ export function TarotSection() {
   }, [])
 
   const persistRecord = (record: TarotRecord) => {
-    const next = [record, ...records.filter((item) => item.id !== record.id)]
+    const sanitized = record.cards.filter(
+      (card): card is TarotCardResult => Boolean(card && card.name && card.focus),
+    )
+    if (sanitized.length === 0) return
+    const next = [
+      { ...record, cards: sanitized },
+      ...records.filter((item) => item.id !== record.id),
+    ]
     setRecords(next)
     saveTarotRecords(next)
   }
@@ -113,7 +123,7 @@ export function TarotSection() {
     const record = records.find((item) => item.id === recordId)
     if (!record) return
     setSelectedRecordId(record.id)
-    setCards(record.cards)
+    setCards(record.cards ?? [])
     setSummary(record.summary)
     setSelectedTopic(record.topic ?? topics[0])
     setSelectedSpread(record.spread as (typeof spreads)[number]['value'])

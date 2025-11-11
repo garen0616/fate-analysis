@@ -53,7 +53,15 @@ export const saveZiweiProfiles = (profiles: ZiweiProfile[]) => {
 
 export const loadTarotRecords = (): TarotRecord[] => {
   if (!isBrowser()) return []
-  return safeParse<TarotRecord[]>(window.localStorage.getItem(TAROT_KEY), [])
+  const raw = safeParse<TarotRecord[]>(window.localStorage.getItem(TAROT_KEY), [])
+  return raw
+    .map((record) => ({
+      ...record,
+      cards: (record.cards ?? []).filter(
+        (card) => card && typeof card.name === 'string' && typeof card.focus === 'string',
+      ),
+    }))
+    .filter((record) => record.cards.length > 0)
 }
 
 export const saveTarotRecords = (records: TarotRecord[]) => {
