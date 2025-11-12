@@ -30,7 +30,7 @@ python index.py   # 服務會跑在 http://127.0.0.1:5000
 
 ```bash
 docker build -t ziwei-api:local services/ziwei-api
-docker run --rm -p 5000:5000 ziwei-api:local
+docker run --rm -e PORT=8080 -p 8080:8080 ziwei-api:local
 ```
 
 ## 與前端的介接
@@ -41,5 +41,4 @@ docker run --rm -p 5000:5000 ziwei-api:local
 VITE_ZIWEI_API_BASE_URL=https://your-ziwei-api.zeabur.app
 ```
 
-前端會呼叫 `${BASE_URL}/calculate?birth_datetime=YYYY-MM-DD HH:mm&gender=male`，若 API 不可用則自動退回範例數據。
-
+前端會呼叫 `${BASE_URL}/calculate?birth_datetime=YYYY-MM-DD HH:mm&gender=male`，若 API 不可用則自動退回範例數據。若部署在僅開放 8080 的平台（如 Zeabur Docker service），可透過環境變數 `PORT` 覆寫對外埠號。

@@ -7,7 +7,7 @@ FROM python:3.11-slim AS runtime
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=5000
+    PORT=8080
 
 # 安裝 Node.js 18 供 iztro 腳本使用
 RUN apt-get update \
@@ -27,4 +27,4 @@ COPY index.py .
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "index:app"]
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT} index:app"]
