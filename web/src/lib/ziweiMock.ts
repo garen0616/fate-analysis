@@ -125,6 +125,7 @@ const elementAdvices: Record<FiveElementState['element'], { advice: string; colo
 
 export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> => {
   const seed = hashString(`${input.name}-${input.date}-${input.time}-${input.city}`)
+  const currentYear = new Date().getFullYear()
   const results = topicTemplates.map((tpl, index) => {
     const variation = (seed >> (index + 2)) % 18
     const polarity = index % 2 === 0 ? 1 : -1
@@ -156,12 +157,12 @@ export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> =
       stars: starList,
       annualTrends: [
         {
-          yearLabel: `${new Date(input.date).getFullYear()} 年`,
+          yearLabel: `${currentYear} 年`,
           highlight: polarity > 0 ? '能見度提升，適合把握主動' : '需要整理內部，避免倉促',
           focus: score > 75 ? '向外拓展、建立新合作' : '培養基本功、留意資源配置',
         },
         {
-          yearLabel: `${new Date(input.date).getFullYear() + 1} 年`,
+          yearLabel: `${currentYear + 1} 年`,
           highlight: polarity > 0 ? '進入收割期，做好指標管理' : '穩住根基，避免分心',
           focus: polarity > 0 ? '設定具體 KPI 與回顧節奏' : '專注重要關係與身心健康',
         },
