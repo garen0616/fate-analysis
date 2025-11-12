@@ -66,6 +66,12 @@ const defaultFiveElements: FiveElementState[] = [
   { element: '水', value: 72, advice: '多補水並透過音樂寫作讓情緒流動。', color: '#4a6fb3' },
 ]
 
+const ensureResults = (data?: ZiweiTopicResult[]) =>
+  Array.isArray(data) && data.length > 0 ? data : defaultResults
+
+const ensureFiveElements = (data?: FiveElementState[]) =>
+  Array.isArray(data) && data.length > 0 ? data : defaultFiveElements
+
 export function ZiweiSection() {
   const [formState, setFormState] = useState<ZiweiInput>(defaultInput)
   const [results, setResults] = useState<ZiweiTopicResult[]>(defaultResults)
@@ -113,9 +119,9 @@ export function ZiweiSection() {
       setProfiles(stored)
       setSelectedProfileId(stored[0].id)
       setFormState(stored[0].input)
-      setResults(stored[0].results)
+      setResults(ensureResults(stored[0].results))
       setSummary(stored[0].summary)
-      setFiveElements(stored[0].fiveElements ?? defaultFiveElements)
+      setFiveElements(ensureFiveElements(stored[0].fiveElements))
       setNotes(stored[0].notes ?? {})
       setSelectedYearIndex(0)
       setReportSource(stored[0].source ?? 'mock')
@@ -134,9 +140,9 @@ export function ZiweiSection() {
         }>(token)
         if (payload) {
           setFormState(payload.input)
-          setResults(payload.results)
+          setResults(ensureResults(payload.results))
           setSummary(payload.summary)
-          setFiveElements(payload.fiveElements ?? defaultFiveElements)
+          setFiveElements(ensureFiveElements(payload.fiveElements))
           setNotes({})
           setSelectedYearIndex(0)
           setReportSource('mock')
@@ -145,9 +151,9 @@ export function ZiweiSection() {
             id: createId(),
             name: payload.input.name || '朋友分享',
             input: payload.input,
-            results: payload.results,
+            results: ensureResults(payload.results),
             summary: payload.summary,
-            fiveElements: payload.fiveElements ?? defaultFiveElements,
+            fiveElements: ensureFiveElements(payload.fiveElements),
             notes: {},
             updatedAt: Date.now(),
             source: 'mock',
@@ -181,18 +187,20 @@ export function ZiweiSection() {
     setLoading(true)
     try {
       const { report, source, error } = await fetchZiweiReport(formState)
-      setResults(report.results)
+      const safeResults = ensureResults(report.results)
+      const safeFiveElements = ensureFiveElements(report.fiveElements)
+      setResults(safeResults)
       setSummary(report.summary)
-      setFiveElements(report.fiveElements)
+      setFiveElements(safeFiveElements)
       setReportSource(source)
       setApiError(error ?? null)
       const profile: ZiweiProfile = {
         id: selectedProfileId ?? createId(),
         name: formState.name || '未命名',
         input: formState,
-        results: report.results,
+        results: safeResults,
         summary: report.summary,
-        fiveElements: report.fiveElements,
+        fiveElements: safeFiveElements,
         notes,
         updatedAt: Date.now(),
         source,
@@ -234,9 +242,9 @@ export function ZiweiSection() {
     if (!profile) return
     setSelectedProfileId(profileId)
     setFormState(profile.input)
-    setResults(profile.results)
+    setResults(ensureResults(profile.results))
     setSummary(profile.summary)
-    setFiveElements(profile.fiveElements ?? defaultFiveElements)
+    setFiveElements(ensureFiveElements(profile.fiveElements))
     setNotes(profile.notes ?? {})
     setReportSource(profile.source ?? 'mock')
     setApiError(null)
