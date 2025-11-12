@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
-import type { FiveElementState, ZiweiInput, ZiweiTopicResult } from '../lib/ziweiMock'
+import type {
+  FiveElementState,
+  ZiweiInput,
+  ZiweiTimelineEntry,
+  ZiweiTopicResult,
+} from '../lib/ziweiMock'
 import {
   createId,
   loadZiweiProfiles,
@@ -66,11 +71,27 @@ const defaultFiveElements: FiveElementState[] = [
   { element: '水', value: 72, advice: '多補水並透過音樂寫作讓情緒流動。', color: '#4a6fb3' },
 ]
 
+const getFallbackTopic = (topic?: string) =>
+  defaultResults.find((item) => item.topic === topic) ?? defaultResults[0]
+
 const ensureResults = (data?: ZiweiTopicResult[]) =>
   Array.isArray(data) && data.length > 0 ? data : defaultResults
 
 const ensureFiveElements = (data?: FiveElementState[]) =>
   Array.isArray(data) && data.length > 0 ? data : defaultFiveElements
+
+const ensureTimeline = (topic: string, timeline?: ZiweiTimelineEntry[]) => {
+  const fallback = getFallbackTopic(topic).timeline
+  return Array.isArray(timeline) && timeline.length > 0 ? timeline : fallback
+}
+
+const ensureAnnualTrends = (
+  topic: string,
+  annualTrends?: ZiweiTopicResult['annualTrends'],
+) => {
+  const fallback = getFallbackTopic(topic).annualTrends
+  return Array.isArray(annualTrends) && annualTrends.length > 0 ? annualTrends : fallback
+}
 
 export function ZiweiSection() {
   const [formState, setFormState] = useState<ZiweiInput>(defaultInput)
@@ -86,7 +107,7 @@ export function ZiweiSection() {
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [reportSource, setReportSource] = useState<'api' | 'mock'>('mock')
   const [apiError, setApiError] = useState<string | null>(null)
-  const yearOptions = results[0]?.annualTrends ?? defaultResults[0].annualTrends
+  const yearOptions = ensureAnnualTrends(results[0]?.topic ?? defaultResults[0].topic, results[0]?.annualTrends)
 
   useEffect(() => {
     if (!yearOptions || yearOptions.length === 0) return
@@ -560,7 +581,10 @@ export function ZiweiSection() {
           </div>
           <div className="space-y-4">
             {results.map((item) => {
-              const trend = item.annualTrends[selectedYearIndex] ?? item.annualTrends[0]
+              const annualTrends = ensureAnnualTrends(item.topic, item.annualTrends)
+              const selectedTrendIndex = Math.min(selectedYearIndex, annualTrends.length - 1)
+              const trend = annualTrends[selectedTrendIndex] ?? annualTrends[0]
+              const timelines = ensureTimeline(item.topic, item.timeline)
               return (
                 <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
                   <div className="mb-2 rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
@@ -600,9 +624,9 @@ export function ZiweiSection() {
                 <p className="mt-2 text-sm text-neutral-700">{item.insight}</p>
                 <p className="mt-1 text-xs text-neutral-500">建議：{item.action}</p>
                 <div className="mt-3 border-t border-neutral-100 pt-3">
-                  <p className="text-xs font-semibold text-neutral-500">時間軸</p>
-                  <div className="mt-2 space-y-2 text-xs text-neutral-600">
-                    {item.timeline.map((node) => (
+                    <p className="text-xs font-semibold text-neutral-500">時間軸</p>
+                    <div className="mt-2 space-y-2 text-xs text-neutral-600">
+                    {timelines.map((node) => (
                       <div key={`${item.topic}-${node.label}`} className="rounded-xl bg-neutral-50 px-3 py-2">
                         <strong className="text-neutral-700">{node.label}</strong>
                         <p>{node.tip}</p>
