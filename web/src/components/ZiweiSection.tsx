@@ -489,64 +489,65 @@ export function ZiweiSection() {
           </button>
         </form>
 
-        <div className="space-y-4 rounded-3xl border border-neutral-100 bg-gradient-to-br from-white to-purple-50 p-6">
-          <div>
-            <p className="text-sm font-semibold text-ziwei">主題摘要</p>
-            <p className="text-sm text-neutral-600">{summary}</p>
-            <div className="mt-2 text-xs text-neutral-500">
-              資料來源：{reportSource === 'api' ? 'Ziwei API（iztro）' : '本機示範數據'}
-              {apiError && <span className="ml-2 text-rose-500">API 提示：{apiError}</span>}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
-              <button
-                onClick={handleShare}
-                className="rounded-2xl border border-ziwei/30 px-3 py-1 text-xs font-semibold text-ziwei"
-              >
-                分享連結
-              </button>
-              {shareStatus && <span>{shareStatus}</span>}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {yearOptions.map((trend, index) => (
-                <button
-                  key={trend.yearLabel}
-                  onClick={() => setSelectedYearIndex(index)}
-                  className={clsx(
-                    'rounded-2xl px-4 py-1 text-xs font-semibold',
-                    index === selectedYearIndex
-                      ? 'bg-ziwei text-white'
-                      : 'bg-white/70 text-ziwei border border-ziwei/20',
-                  )}
-                >
-                  {trend.yearLabel}
-                </button>
-              ))}
-            </div>
-            {comparisonRows.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-white/70 bg-white/90 p-3 text-xs text-neutral-600">
-                <p className="mb-2 font-semibold text-ziwei">與朋友指數比較</p>
-                <div className="space-y-1">
-                  {comparisonRows.map((row) => (
-                    <div key={row.topic} className="flex items-center justify-between">
-                      <span>{row.topic}</span>
-                      <span>
-                        我 {row.mine} / 朋友 {row.friend}
-                        <span
-                          className={clsx('ml-2 font-semibold', {
-                            'text-emerald-600': row.diff >= 0,
-                            'text-rose-600': row.diff < 0,
-                          })}
-                        >
-                          {row.diff >= 0 ? '+' : ''}
-                          {row.diff}
-                        </span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        <div className="lg:col-span-2 rounded-3xl border border-neutral-100 bg-white/95 p-6 shadow-xl">
+          <p className="text-sm font-semibold text-ziwei">主題摘要</p>
+          <p className="mt-1 text-sm text-neutral-600">{summary}</p>
+          <div className="mt-2 text-xs text-neutral-500">
+            資料來源：{reportSource === 'api' ? 'Ziwei API（iztro）' : '本機示範數據'}
+            {apiError && <span className="ml-2 text-rose-500">API 提示：{apiError}</span>}
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+            <button
+              onClick={handleShare}
+              className="rounded-2xl border border-ziwei/30 px-3 py-1 text-xs font-semibold text-ziwei"
+            >
+              分享連結
+            </button>
+            {shareStatus && <span>{shareStatus}</span>}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {yearOptions.map((trend, index) => (
+              <button
+                key={trend.yearLabel}
+                onClick={() => setSelectedYearIndex(index)}
+                className={clsx(
+                  'rounded-2xl px-4 py-1 text-xs font-semibold',
+                  index === selectedYearIndex
+                    ? 'bg-ziwei text-white'
+                    : 'bg-white/70 text-ziwei border border-ziwei/20',
+                )}
+              >
+                {trend.yearLabel}
+              </button>
+            ))}
+          </div>
+          {comparisonRows.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-white/70 bg-white/90 p-3 text-xs text-neutral-600">
+              <p className="mb-2 font-semibold text-ziwei">與朋友指數比較</p>
+              <div className="space-y-1">
+                {comparisonRows.map((row) => (
+                  <div key={row.topic} className="flex items-center justify-between">
+                    <span>{row.topic}</span>
+                    <span>
+                      我 {row.mine} / 朋友 {row.friend}
+                      <span
+                        className={clsx('ml-2 font-semibold', {
+                          'text-emerald-600': row.diff >= 0,
+                          'text-rose-600': row.diff < 0,
+                        })}
+                      >
+                        {row.diff >= 0 ? '+' : ''}
+                        {row.diff}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4 rounded-3xl border border-neutral-100 bg-gradient-to-br from-white to-purple-50 p-6">
           <div className="h-64 rounded-2xl border border-white/70 bg-white/80 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={results} outerRadius="80%">
