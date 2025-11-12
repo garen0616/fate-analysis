@@ -26,6 +26,30 @@ export type ZiweiStarInfluence = {
   tip: string
 }
 
+export type ZiweiQuarterTrend = {
+  quarter: string
+  theme: string
+  focus: string
+  energy: number
+}
+
+export type ZiweiCycleInfo = {
+  major: string
+  minor: string
+}
+
+export type ZiweiRelationHints = {
+  ally: string
+  opposite: string
+  triad: string
+}
+
+export type ZiweiStarAlert = {
+  type: '四化' | '吉' | '凶'
+  label: string
+  detail: string
+}
+
 export type ZiweiTopicResult = {
   topic: string
   score: number
@@ -34,6 +58,10 @@ export type ZiweiTopicResult = {
   timeline: ZiweiTimelineEntry[]
   palace: ZiweiPalaceDetail
   stars: ZiweiStarInfluence[]
+  quarterTrends: ZiweiQuarterTrend[]
+  cycleInfo: ZiweiCycleInfo
+  relationHints: ZiweiRelationHints
+  starAlerts: ZiweiStarAlert[]
   annualTrends: Array<{
     yearLabel: string
     highlight: string
@@ -130,6 +158,16 @@ export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> =
     const variation = (seed >> (index + 2)) % 18
     const polarity = index % 2 === 0 ? 1 : -1
     const score = clamp(70 + polarity * variation)
+    const quarterTrends = ['Q1', 'Q2', 'Q3', 'Q4'].map((label, quarterIndex) => {
+      const base = score + (quarterIndex - 1) * 3 * polarity
+      return {
+        quarter: label,
+        theme: polarity > 0 ? '推進' : '調整',
+        focus: quarterIndex % 2 === 0 ? '維繫關係' : '自我優化',
+        energy: clamp(base, 40, 95),
+      }
+    })
+
     const timeline: ZiweiTimelineEntry[] = [
       { label: '下個月', tip: polarity > 0 ? '適合推新計畫' : '先穩住節奏再前進' },
       { label: '三個月內', tip: score > 75 ? '持續增溫、主動出擊' : '留意情緒波動' },
@@ -141,6 +179,30 @@ export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> =
       type: starIndex === 0 ? '吉' : '凶',
       tip: starIndex === 0 ? `${starName} 幫助快速聚焦` : `${starName} 可能帶來雜訊，記得簡化流程`,
     }))
+
+    const cycleInfo: ZiweiCycleInfo = {
+      major: `${tpl.palace} 大限`,
+      minor: starList[0]?.name ? `${starList[0].name} 小限` : '流年小限',
+    }
+
+    const relationHints: ZiweiRelationHints = {
+      ally: `${tpl.palace} 與 ${tpl.topic.includes('家庭') ? '田宅宮' : '遷移宮'} 相助`,
+      opposite: `${tpl.palace} 對宮需留意 ${tpl.topic.includes('事業') ? '田宅宮' : '官祿宮'}`,
+      triad: `${tpl.palace} 三合 ${tpl.topic.includes('健康') ? '命宮/遷移宮' : '財帛/官祿宮'}`,
+    }
+
+    const starAlerts: ZiweiStarAlert[] = [
+      {
+        type: '四化',
+        label: '化祿',
+        detail: `${tpl.palace} 得祿，適合設定收益指標。`,
+      },
+      {
+        type: '凶',
+        label: '煞曜',
+        detail: `留意 ${tpl.palace} 的外在干擾，簡化流程可降低波動。`,
+      },
+    ]
 
     return {
       topic: tpl.topic,
@@ -155,6 +217,10 @@ export const mockZiweiReport = async (input: ZiweiInput): Promise<ZiweiReport> =
         comment: `${tpl.palace} 受 ${tpl.stars[0]} 影響，${tpl.element} 氣較為明顯。`,
       },
       stars: starList,
+      quarterTrends,
+      cycleInfo,
+      relationHints,
+      starAlerts,
       annualTrends: [
         {
           yearLabel: `${currentYear} 年`,

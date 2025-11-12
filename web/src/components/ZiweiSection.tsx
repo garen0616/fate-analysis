@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import type {
   FiveElementState,
+  ZiweiCycleInfo,
   ZiweiInput,
+  ZiweiQuarterTrend,
+  ZiweiRelationHints,
+  ZiweiStarAlert,
   ZiweiTimelineEntry,
   ZiweiTopicResult,
 } from '../lib/ziweiMock'
@@ -54,6 +58,25 @@ const defaultResults: ZiweiTopicResult[] = [
       { type: '吉', name: '武曲', tip: '武曲帶來執行力，利於爭取資源。' },
       { type: '凶', name: '地劫', tip: '地劫提醒留意決策過快的風險。' },
     ],
+    quarterTrends: [
+      { quarter: 'Q1', theme: '推進', focus: '設定 KPI', energy: 78 },
+      { quarter: 'Q2', theme: '調整', focus: '優化流程', energy: 72 },
+      { quarter: 'Q3', theme: '推進', focus: '拓展人脈', energy: 80 },
+      { quarter: 'Q4', theme: '收斂', focus: '成果複盤', energy: 74 },
+    ],
+    cycleInfo: {
+      major: '官祿宮 大限',
+      minor: '武曲 小限',
+    },
+    relationHints: {
+      ally: '官祿宮 與 遷移宮相助',
+      opposite: '官祿宮 對宮需留意 田宅宮',
+      triad: '官祿宮 三合 財帛 / 兄弟宮',
+    },
+    starAlerts: [
+      { type: '四化', label: '化祿', detail: '官祿宮得祿，合作收益可期待。' },
+      { type: '凶', label: '煞曜', detail: '保持節奏，避免倉促決策。' },
+    ],
     annualTrends: [
       { yearLabel: '今年', highlight: '能見度增加、適合把握主動。', focus: '設定 KPI 與公關節奏。' },
       { yearLabel: '明年', highlight: '收割成果並回顧流程。', focus: '調整人力配置與現金流。' },
@@ -85,6 +108,22 @@ const ensureTimeline = (topic: string, timeline?: ZiweiTimelineEntry[]) => {
   return Array.isArray(timeline) && timeline.length > 0 ? timeline : fallback
 }
 
+const ensureQuarterTrends = (topic: string, trends?: ZiweiQuarterTrend[]) => {
+  const fallback = getFallbackTopic(topic).quarterTrends
+  return Array.isArray(trends) && trends.length > 0 ? trends : fallback
+}
+
+const ensureCycleInfo = (topic: string, cycle?: ZiweiCycleInfo) =>
+  cycle ?? getFallbackTopic(topic).cycleInfo
+
+const ensureRelationHints = (topic: string, hints?: ZiweiRelationHints) =>
+  hints ?? getFallbackTopic(topic).relationHints
+
+const ensureStarAlerts = (topic: string, alerts?: ZiweiStarAlert[]) => {
+  const fallback = getFallbackTopic(topic).starAlerts
+  return Array.isArray(alerts) && alerts.length > 0 ? alerts : fallback
+}
+
 const ensureAnnualTrends = (
   topic: string,
   annualTrends?: ZiweiTopicResult['annualTrends'],
@@ -107,6 +146,7 @@ export function ZiweiSection() {
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [reportSource, setReportSource] = useState<'api' | 'mock'>('mock')
   const [apiError, setApiError] = useState<string | null>(null)
+  const [selectedQuarterIndex, setSelectedQuarterIndex] = useState(0)
   const yearOptions = ensureAnnualTrends(results[0]?.topic ?? defaultResults[0].topic, results[0]?.annualTrends)
 
   useEffect(() => {
@@ -145,6 +185,7 @@ export function ZiweiSection() {
       setFiveElements(ensureFiveElements(stored[0].fiveElements))
       setNotes(stored[0].notes ?? {})
       setSelectedYearIndex(0)
+      setSelectedQuarterIndex(0)
       setReportSource(stored[0].source ?? 'mock')
       setApiError(null)
     }
@@ -166,6 +207,7 @@ export function ZiweiSection() {
           setFiveElements(ensureFiveElements(payload.fiveElements))
           setNotes({})
           setSelectedYearIndex(0)
+          setSelectedQuarterIndex(0)
           setReportSource('mock')
           setApiError(null)
           const profile: ZiweiProfile = {
@@ -215,6 +257,7 @@ export function ZiweiSection() {
       setFiveElements(safeFiveElements)
       setReportSource(source)
       setApiError(error ?? null)
+      setSelectedQuarterIndex(0)
       const profile: ZiweiProfile = {
         id: selectedProfileId ?? createId(),
         name: formState.name || '未命名',
@@ -269,6 +312,7 @@ export function ZiweiSection() {
     setNotes(profile.notes ?? {})
     setReportSource(profile.source ?? 'mock')
     setApiError(null)
+    setSelectedQuarterIndex(0)
   }
 
   const handleNewProfile = () => {
@@ -280,6 +324,7 @@ export function ZiweiSection() {
     setNotes({})
     setCompareProfileId(null)
     setSelectedYearIndex(0)
+    setSelectedQuarterIndex(0)
     setReportSource('mock')
     setApiError(null)
   }
@@ -521,6 +566,61 @@ export function ZiweiSection() {
               </button>
             ))}
           </div>
+          <div className="mt-4 border-t border-neutral-100 pt-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-xs font-semibold text-neutral-500">季度節奏</p>
+              {['Q1', 'Q2', 'Q3', 'Q4'].map((label, index) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setSelectedQuarterIndex(index)}
+                  className={clsx(
+                    'rounded-full px-3 py-1 text-[11px] font-semibold',
+                    index === selectedQuarterIndex
+                      ? 'bg-ziwei text-white'
+                      : 'bg-white border border-ziwei/30 text-ziwei',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 text-xs text-neutral-600">
+              {(() => {
+                const primary = results[0] ?? defaultResults[0]
+                const quarters = ensureQuarterTrends(primary.topic, primary.quarterTrends)
+                const selectedQuarter = quarters[selectedQuarterIndex] ?? quarters[0]
+                if (!selectedQuarter) return null
+                return (
+                  <div className="rounded-2xl border border-neutral-100 bg-white/80 px-4 py-3">
+                    <p className="font-semibold text-ziwei">
+                      {selectedQuarter.quarter} · {selectedQuarter.theme}
+                    </p>
+                    <p className="text-neutral-500">焦點：{selectedQuarter.focus}</p>
+                    <p className="text-neutral-500">能量：{selectedQuarter.energy}</p>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+
+          {(() => {
+            const primary = results[0] ?? defaultResults[0]
+            const cycleInfo = ensureCycleInfo(primary.topic, primary.cycleInfo)
+            return (
+              <div className="mt-4 grid gap-3 border-t border-neutral-100 pt-4 text-xs text-neutral-500 sm:grid-cols-2">
+                <div className="rounded-2xl bg-ziwei/5 px-3 py-2">
+                  <p className="font-semibold text-ziwei">大限定位</p>
+                  <p>{cycleInfo.major}</p>
+                </div>
+                <div className="rounded-2xl bg-ziwei/5 px-3 py-2">
+                  <p className="font-semibold text-ziwei">小限流向</p>
+                  <p>{cycleInfo.minor}</p>
+                </div>
+              </div>
+            )
+          })()}
+
           {comparisonRows.length > 0 && (
             <div className="mt-4 rounded-2xl border border-white/70 bg-white/90 p-3 text-xs text-neutral-600">
               <p className="mb-2 font-semibold text-ziwei">與朋友指數比較</p>
@@ -545,6 +645,46 @@ export function ZiweiSection() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="lg:col-span-2 space-y-4 rounded-3xl border border-neutral-100 bg-gradient-to-br from-white to-purple-50 p-6">
+          <p className="text-sm font-semibold text-ziwei">宮位關聯導圖</p>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {results.map((item) => {
+              const relation = ensureRelationHints(item.topic, item.relationHints)
+              return (
+                <div
+                  key={`relation-${item.topic}`}
+                  className="rounded-2xl border border-white/70 bg-white/90 p-4 text-xs text-neutral-600"
+                >
+                  <p className="text-sm font-semibold text-ziwei">{item.palace.name}</p>
+                  <p className="mt-1">夥伴：{relation.ally}</p>
+                  <p>對宮：{relation.opposite}</p>
+                  <p>三合：{relation.triad}</p>
+                </div>
+              )
+            })}
+          </div>
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-4">
+            <p className="text-sm font-semibold text-ziwei">星曜提醒</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {results.slice(0, 4).flatMap((item) =>
+                ensureStarAlerts(item.topic, item.starAlerts)
+                  .slice(0, 1)
+                  .map((alert) => (
+                    <div
+                      key={`alert-${item.topic}-${alert.label}`}
+                      className="rounded-2xl border border-ziwei/20 bg-white px-3 py-2 text-xs text-neutral-600"
+                    >
+                      <p className="font-semibold text-ziwei">
+                        [{alert.type}] {alert.label}
+                      </p>
+                      <p>{alert.detail}</p>
+                    </div>
+                  )),
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-4 rounded-3xl border border-neutral-100 bg-gradient-to-br from-white to-purple-50 p-6">
@@ -586,6 +726,12 @@ export function ZiweiSection() {
               const selectedTrendIndex = Math.min(selectedYearIndex, annualTrends.length - 1)
               const trend = annualTrends[selectedTrendIndex] ?? annualTrends[0]
               const timelines = ensureTimeline(item.topic, item.timeline)
+              const quarterTrends = ensureQuarterTrends(item.topic, item.quarterTrends)
+              const selectedQuarter =
+                quarterTrends[selectedQuarterIndex] ?? quarterTrends[0]
+              const cycleInfo = ensureCycleInfo(item.topic, item.cycleInfo)
+              const relationHints = ensureRelationHints(item.topic, item.relationHints)
+              const starAlerts = ensureStarAlerts(item.topic, item.starAlerts)
               return (
                 <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
                   <div className="mb-2 rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
@@ -607,6 +753,20 @@ export function ZiweiSection() {
                   <p className="mt-1 text-[11px] text-neutral-500">
                     用神 {item.useGod} ｜ 忌神 {item.avoidGod}
                   </p>
+                </div>
+                <div className="mt-2 grid gap-2 text-xs text-neutral-600 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-ziwei/5 px-3 py-2">
+                    <p className="font-semibold text-ziwei">大限 / 小限</p>
+                    <p>{cycleInfo.major}</p>
+                    <p>{cycleInfo.minor}</p>
+                  </div>
+                  <div className="rounded-2xl bg-ziwei/5 px-3 py-2">
+                    <p className="font-semibold text-ziwei">
+                      {selectedQuarter.quarter} · {selectedQuarter.theme}
+                    </p>
+                    <p>焦點：{selectedQuarter.focus}</p>
+                    <p>能量：{selectedQuarter.energy}</p>
+                  </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   {item.stars.map((star) => (
@@ -631,6 +791,28 @@ export function ZiweiSection() {
                       <div key={`${item.topic}-${node.label}`} className="rounded-xl bg-neutral-50 px-3 py-2">
                         <strong className="text-neutral-700">{node.label}</strong>
                         <p>{node.tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+                  <p className="font-semibold text-neutral-600">宮位關聯</p>
+                  <p>{relationHints.ally}</p>
+                  <p>{relationHints.opposite}</p>
+                  <p>{relationHints.triad}</p>
+                </div>
+                <div className="mt-3 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+                  <p className="font-semibold text-neutral-600">星曜提醒</p>
+                  <div className="mt-1 space-y-1">
+                    {starAlerts.map((alert) => (
+                      <div
+                        key={`${item.topic}-${alert.label}`}
+                        className="rounded-xl border border-ziwei/20 bg-white px-3 py-2 text-[11px]"
+                      >
+                        <p className="font-semibold text-ziwei">
+                          [{alert.type}] {alert.label}
+                        </p>
+                        <p className="text-neutral-600">{alert.detail}</p>
                       </div>
                     ))}
                   </div>
