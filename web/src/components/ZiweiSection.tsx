@@ -37,6 +37,16 @@ const defaultInput: ZiweiInput = {
   trueSolar: true,
 }
 
+const pairedTopicOrder = [
+  '事業 / 財運',
+  '婚姻 / 伴侶',
+  '愛情 / 新關係',
+  '家庭（父母＋子女）',
+  '健康 / 身心',
+]
+
+const pairedTopicSet = new Set(pairedTopicOrder.slice(0, 4))
+
 const defaultResults: ZiweiTopicResult[] = [
   {
     topic: '事業 / 財運',
@@ -173,6 +183,14 @@ export function ZiweiSection() {
       })
       .filter(Boolean) as Array<{ topic: string; mine: number; friend: number; diff: number }>
   }, [compareProfileId, profiles, results])
+
+  const orderedResults = useMemo(() => {
+    const prioritized = pairedTopicOrder
+      .map((topic) => results.find((item) => item.topic === topic))
+      .filter((item): item is ZiweiTopicResult => Boolean(item))
+    const remaining = results.filter((item) => !pairedTopicOrder.includes(item.topic))
+    return [...prioritized, ...remaining]
+  }, [results])
 
   useEffect(() => {
     const stored = loadZiweiProfiles()
@@ -720,8 +738,8 @@ export function ZiweiSection() {
               ))}
             </div>
           </div>
-          <div className="space-y-4">
-            {results.map((item) => {
+          <div className="grid gap-4 md:grid-cols-2">
+            {orderedResults.map((item) => {
               const annualTrends = ensureAnnualTrends(item.topic, item.annualTrends)
               const selectedTrendIndex = Math.min(selectedYearIndex, annualTrends.length - 1)
               const trend = annualTrends[selectedTrendIndex] ?? annualTrends[0]
@@ -732,8 +750,15 @@ export function ZiweiSection() {
               const cycleInfo = ensureCycleInfo(item.topic, item.cycleInfo)
               const relationHints = ensureRelationHints(item.topic, item.relationHints)
               const starAlerts = ensureStarAlerts(item.topic, item.starAlerts)
+              const shouldSpanTwoColumns = !pairedTopicSet.has(item.topic)
               return (
-                <article key={item.topic} className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow">
+                <article
+                  key={item.topic}
+                  className={clsx(
+                    'rounded-2xl border border-white/70 bg-white/90 p-4 shadow',
+                    shouldSpanTwoColumns && 'md:col-span-2',
+                  )}
+                >
                   <div className="mb-2 rounded-2xl bg-ziwei/5 px-3 py-2 text-xs text-neutral-600">
                     <p className="font-semibold text-ziwei">{trend.yearLabel}</p>
                     <p>{trend.highlight}</p>
